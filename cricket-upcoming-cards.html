@@ -1,0 +1,1114 @@
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VTNHF7TQMV"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-VTNHF7TQMV');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="referrer" content="no-referrer">
+    
+    <title>Sportsplay Live App</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for IPTV icons & Quality gear -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #12161b;
+            --card-bg: #1a2027;
+            --primary-green: #00d27a;
+            --text-main: #ffffff;
+            --text-muted: #8b9eb0;
+            --live-red: #ff3b30;
+            --iptv-card-border: #155c4d;
+        }
+
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background-color: var(--bg-color); 
+            font-family: 'Inter', 'Hind Siliguri', sans-serif; 
+            color: var(--text-main); 
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+        
+        ::-webkit-scrollbar { display: none; }
+        * { scrollbar-width: none; }
+        
+        /* =========================================
+           HOME PAGE (MATCH LIST) STYLES
+           ========================================= */
+        #match-list-view {
+            width: 100%; height: 100%; overflow-y: auto; padding-bottom: 80px; box-sizing: border-box;
+        }
+
+        .top-tabs {
+            display: flex; gap: 10px; padding: 15px; overflow-x: auto;
+            position: sticky; top: 0; background: var(--bg-color); z-index: 10;
+        }
+        .tab-btn {
+            background: #1f2731; color: var(--text-muted); border: 1px solid transparent;
+            padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;
+            white-space: nowrap; cursor: pointer; display: flex; align-items: center; gap: 6px;
+        }
+        .tab-btn.active {
+            color: var(--text-main); border: 1px solid var(--primary-green); background: rgba(0,210,122,0.1);
+        }
+        .tab-btn svg { width: 16px; height: 16px; }
+
+        .matches-container { padding: 0 15px; display: flex; flex-direction: column; gap: 15px; }
+
+        .match-card {
+            background: var(--card-bg); border: 1px solid var(--primary-green);
+            border-radius: 16px; padding: 20px 15px 15px 15px; cursor: pointer; position: relative;
+            transition: transform 0.2s; overflow: hidden;
+        }
+        .match-card:active { transform: scale(0.98); }
+        
+        .card-header {
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+            font-size: 11px; font-weight: 600; color: var(--text-main); text-transform: uppercase;
+            letter-spacing: 0.5px; margin-bottom: 18px;
+        }
+        .card-header img { width: 16px; height: 16px; border-radius: 50%; object-fit: contain; }
+        
+        .teams-area { display: flex; justify-content: space-between; align-items: center; }
+        .team { display: flex; align-items: center; gap: 12px; flex: 1; }
+        .team.right { flex-direction: row-reverse; }
+        
+        .team-name { font-size: 14px; font-weight: 600; line-height: 1.3; color: #fff; text-align: left; }
+        .team.right .team-name { text-align: right; }
+        
+        /* Logo Box Design */
+        .team-logo-box { 
+            width: 44px; height: 44px; border-radius: 10px; background: #ffffff; 
+            display: flex; align-items: center; justify-content: center; font-size: 22px;
+            flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.2); padding: 4px; box-sizing: border-box;
+        }
+        .team-logo-box img { width: 100%; height: 100%; object-fit: contain; border-radius: 6px; }
+
+        .match-center {
+            display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 0.8; text-align: center;
+        }
+        .live-icon-text { color: var(--live-red); font-size: 14px; font-weight: 800; letter-spacing: 1px; animation: pulse-opacity 1.5s infinite; line-height: 1; }
+        @keyframes pulse-opacity { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        
+        .live-text { color: var(--live-red); font-size: 12px; font-weight: 500; margin-top: 6px; }
+        .timer-text { font-size: 13px; color: var(--text-main); margin-top: 4px; font-weight: 600; }
+        
+        .upcoming-time { color: #fbbf24; font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+        .upcoming-date { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+        
+        .upcoming-footer { display: flex; justify-content: center; margin-top: 15px; }
+        .starting-pill {
+            background: rgba(255,165,0,0.1); color: #fbbf24; font-size: 11px; font-weight: 600; 
+            padding: 6px 16px; border-radius: 20px; border: 1px solid rgba(250,204,21,0.2);
+        }
+        
+        .hot-badge {
+            position: absolute; top: -1px; left: -1px; background: var(--primary-green);
+            color: #000; font-size: 11px; font-weight: 800; padding: 4px 12px;
+            border-bottom-right-radius: 12px; border-top-left-radius: 16px; display: flex; align-items: center; gap: 4px;
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%);
+            background: #1a2027; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1);
+            display: flex; justify-content: space-between; align-items: center;
+            width: calc(100% - 30px); max-width: 400px; padding: 5px; z-index: 50;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+        .nav-item {
+            padding: 10px 20px; color: var(--text-muted); font-size: 13px; font-weight: 600;
+            display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 25px; cursor: pointer; transition: 0.3s;
+        }
+        .nav-item.active { background: rgba(255,255,255,0.1); color: var(--text-main); }
+        .nav-item svg { width: 20px; height: 20px; fill: currentColor; }
+
+        /* =========================================
+           PLAYER VIEW STYLES
+           ========================================= */
+        #player-view {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+            background: #000; z-index: 100; display: none; flex-direction: column; overflow: hidden;
+        }
+        
+        /* Auto Hide UI Class */
+        .auto-hide { transition: opacity 0.4s ease; }
+        #player-view.hide-ui .auto-hide { opacity: 0 !important; pointer-events: none !important; }
+
+        .back-btn-wrapper { position: absolute; top: 15px; left: 15px; z-index: 1000001; }
+        .back-btn {
+            background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 15px;
+            border-radius: 20px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; cursor: pointer;
+        }
+
+        /* Server Selection Container */
+        #server-list-container {
+            position: absolute;
+            top: 15px;
+            left: 100px; /* Space for the back button */
+            right: 15px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            z-index: 1000001;
+            padding-bottom: 5px;
+        }
+        .server-btn {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.3s;
+        }
+        .server-btn.active {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--primary-green);
+        }
+        .server-btn svg {
+            fill: var(--primary-green);
+        }
+        
+        #player-wrapper { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; background: #000;
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        video { object-fit: contain; outline: none; margin: auto; transition: width 0.2s, height 0.2s; width: 100%; height: 100%; }
+        
+        #unmute-overlay {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            color: #fff; padding: 12px 28px; border-radius: 40px; border: 1px solid rgba(255,255,255,0.2);
+            display: none; align-items: center; gap: 10px; cursor: pointer; z-index: 100000; font-weight: 600;
+        }
+        #unmute-overlay svg { width: 24px; height: 24px; fill: currentColor; }
+
+        .sticky-notice {
+            position: absolute; top: 65px; left: 10px; width: calc(100% - 20px); 
+            background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(20px);
+            color: #fff; padding: 8px 35px 8px 12px; font-size: 13px; font-weight: 600;
+            z-index: 1000000; box-sizing: border-box; display: flex; align-items: center; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); overflow: hidden;
+        }
+        .marquee-wrapper { flex: 1; overflow: hidden; white-space: nowrap; position: relative; }
+        .marquee-text { display: inline-block; padding-left: 100%; animation: marquee-scroll 18s linear infinite; }
+        @keyframes marquee-scroll { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+        .sticky-notice .close-btn { position: absolute; right: 8px; background: 0 0; border: none; color: #fff; font-size: 18px; cursor: pointer; padding: 0; }
+        
+        /* Player Floating Buttons */
+        .player-float-btn {
+            position: absolute; bottom: 85px; z-index: 99999;
+            background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50%; color: #fff; cursor: pointer; backdrop-filter: blur(10px);
+            width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; transition: 0.2s;
+        }
+        .player-float-btn:hover { background: rgba(255,255,255,0.2); }
+        .player-float-btn svg { width: 18px; height: 18px; fill: currentColor; }
+        .player-float-btn i { font-size: 16px; }
+
+        #btn-quality { right: 105px; }
+        #btn-ratio { right: 58px; }
+        #btn-fullscreen { right: 10px; }
+
+        /* Floating Menu */
+        .floating-menu {
+            position: absolute; bottom: 130px; right: 100px;
+            background: rgba(18, 22, 27, 0.95); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; width: 140px; max-height: 250px; overflow-y: auto;
+            z-index: 100000; display: none; flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); backdrop-filter: blur(15px);
+        }
+        .menu-item {
+            padding: 10px 16px; color: #ccc; font-size: 13px; font-weight: 500;
+            cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-item:hover, .menu-item.active { color: var(--primary-green); background: rgba(255,255,255,0.05); }
+        .menu-item .check { display: none; color: var(--primary-green); font-size: 14px; font-weight: bold; }
+        .menu-item.active .check { display: block; }
+        
+        /* Central OSD for Aspect Ratio */
+        .ratio-osd {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px);
+            color: #fff; padding: 16px 32px; border-radius: 12px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .ratio-osd.show { opacity: 1; }
+        .osd-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; letter-spacing: 0.5px; }
+        .osd-subtitle { font-size: 12px; color: #aaa; }
+
+        /* Fullscreen Exceptions */
+        :fullscreen .bottom-nav, :-webkit-full-screen .bottom-nav,
+        :fullscreen .top-tabs, :-webkit-full-screen .top-tabs { display: none !important; }
+
+        /* =========================================
+           IPTV VIEW STYLES (WITH MANUAL INPUT & IFRAME)
+           ========================================= */
+        #iptv-list-view {
+            display: none; width: 100%; height: 100%; overflow-y: auto; padding-bottom: 80px; box-sizing: border-box; background-color: #10171e;
+        }
+        .iptv-header-wrap {
+            position: sticky; top: 0; background: #10171e; z-index: 10; padding: 15px; border-bottom: 1px solid #1f2937;
+        }
+        .iptv-cats-container {
+            display: flex; gap: 20px; align-items: center; overflow-x: auto; padding-bottom: 10px;
+        }
+        .iptv-cat-item {
+            font-size: 14px; font-weight: 600; color: #9ca3af; white-space: nowrap; cursor: pointer; position: relative; transition: 0.2s; text-transform: uppercase;
+        }
+        .iptv-cat-active { color: var(--primary-green); }
+        .iptv-cat-active::after {
+            content: ''; position: absolute; bottom: -12px; left: 0; width: 100%; height: 3px; background-color: var(--primary-green); border-radius: 2px 2px 0 0;
+        }
+        .iptv-grid-wrap { padding: 15px; }
+        .iptv-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+        @media (min-width: 640px) { .iptv-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+        @media (min-width: 768px) { .iptv-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+        .iptv-card {
+            background: transparent; border: 1px solid var(--iptv-card-border); border-radius: 8px;
+            padding: 6px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.15s;
+        }
+        .iptv-card:active { transform: scale(0.95); background: rgba(255,255,255,0.05); }
+        .iptv-logo-box {
+            width: 100%; aspect-ratio: 1/1; border-radius: 50%; background: radial-gradient(circle, #ff6b2b 0%, #d42211 100%);
+            display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.1);
+            overflow: hidden; padding: 4px; box-sizing: border-box;
+        }
+        .iptv-logo-box img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; background: rgba(255,255,255,0.05); }
+        .iptv-logo-box i { font-size: 24px; color: rgba(255,255,255,0.9); }
+        .iptv-name { font-size: 12px; font-weight: 500; color: #e5e7eb; margin-top: 8px; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .iptv-msg-box { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .iptv-msg-box p { margin-top: 15px; color: #9ca3af; text-align: center; font-size: 14px; }
+        .file-upload-btn {
+            background: var(--primary-green); color: #000; font-weight: 700; padding: 10px 24px;
+            border-radius: 30px; margin-top: 15px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .manual-input-wrap {
+            display: flex; width: 100%; max-width: 350px; margin-top: 20px; gap: 8px;
+        }
+        .manual-input-wrap input {
+            flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #1f2937; background: #12161b; color: #fff; font-size: 13px; outline: none;
+        }
+        .manual-input-wrap button {
+            background: var(--primary-green); color: #000; font-weight: 700; padding: 0 20px; border-radius: 8px; border: none; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ==============================================
+     VIEW 1: MATCH LIST (HOME PAGE)
+     ============================================== -->
+<div id="match-list-view">
+    
+    <div class="top-tabs">
+        <div class="tab-btn active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            All (2)
+        </div>
+        <div class="tab-btn">Live (2)</div>
+    </div>
+
+    <div class="matches-container">
+
+        <!-- Match Card 1: ICC WORLD TEST CHAMPIONSHIP (Live) -->
+        <div class="match-card" onclick="openPlayer('https://saseries.akamaized.net/hls/live/2110097/56408643-tapMad/level_0.m3u8', 'home')">
+            <div class="hot-badge">HOT 🔥</div>
+            <div class="card-header">
+                🏏 ICC WORLD TEST CHAMPIONSHIP
+            </div>
+            <div class="teams-area">
+                <div class="team">
+                    <div class="team-logo-box">
+                        <img src="https://upload.wikimedia.org/wikipedia/en/thumb/e/e4/Cricket_Australia_logo.svg/150px-Cricket_Australia_logo.svg.png" onerror="this.parentElement.innerHTML='🇦🇺'">
+                    </div>
+                    <div class="team-name">Australia</div>
+                </div>
+                <div class="match-center">
+                    <div class="live-icon-text">((&bull;))</div>
+                    <div class="live-text">Live</div>
+                </div>
+                <div class="team right">
+                    <div class="team-name">Bangladesh</div>
+                    <div class="team-logo-box">
+                        <img src="https://upload.wikimedia.org/wikipedia/en/thumb/8/8d/Bangladesh_Cricket_Board_Logo.svg/150px-Bangladesh_Cricket_Board_Logo.svg.png" onerror="this.parentElement.innerHTML='🇧🇩'">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Match Card 2: CARIBBEAN PREMIER LEAGUE T20 (Live) -->
+        <div class="match-card" onclick="openPlayer('https://saseries.akamaized.net/hls/live/2110097/D2PAKvsWI-TesT-tapmad/master.m3u8', 'home')">
+            <div class="hot-badge">HOT 🔥</div>
+            <div class="card-header">
+                🏏 CARIBBEAN PREMIER LEAGUE T20
+            </div>
+            <div class="teams-area">
+                <div class="team">
+                    <div class="team-logo-box">
+                        <img src="https://upload.wikimedia.org/wikipedia/en/thumb/d/d4/Caribbean_Premier_League_logo.svg/150px-Caribbean_Premier_League_logo.svg.png" onerror="this.parentElement.innerHTML='🏏'">
+                    </div>
+                    <div class="team-name">CPL</div>
+                </div>
+                <div class="match-center">
+                    <div class="live-icon-text">((&bull;))</div>
+                    <div class="live-text">Live</div>
+                </div>
+                <div class="team right">
+                    <div class="team-name">CPL</div>
+                    <div class="team-logo-box">
+                        <img src="https://upload.wikimedia.org/wikipedia/en/thumb/d/d4/Caribbean_Premier_League_logo.svg/150px-Caribbean_Premier_League_logo.svg.png" onerror="this.parentElement.innerHTML='🏏'">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ==============================================
+     VIEW 3: IPTV LIST VIEW (WITH MANUAL INPUT & IFRAME)
+     ============================================== -->
+<div id="iptv-list-view">
+    <div class="iptv-header-wrap">
+        <div style="display:flex; align-items:center; gap:12px; border-bottom: 1px solid #1f2937; padding-bottom: 12px; margin-bottom: 12px;">
+            <div style="background:#1f2731; border-radius:6px; padding:6px 10px; color:#fff;">
+                <i class="fa-solid fa-list-ul"></i>
+            </div>
+            <div class="iptv-cats-container hide-scrollbar" id="iptvCategoryContainer">
+                <span class="iptv-cat-item iptv-cat-active" onclick="filterIPTVCategory('ALL', this)">ALL</span>
+                <span style="font-size:12px; color:#6b7280;" id="iptvCatLoadingText">লোড হচ্ছে...</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="iptv-grid-wrap relative">
+        <div id="iptvLoadingIndicator" class="iptv-msg-box" style="z-index: 5;">
+            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-active-green" style="font-size: 40px; color: #20c997;"></i>
+            <p>প্লেলিস্ট অটো-লোড হচ্ছে...</p>
+        </div>
+        
+        <div id="iptvFallbackUpload" class="iptv-msg-box" style="display: none; background: #15202b; border-radius: 12px; border: 1px solid #1f2937; z-index: 10; width: 90%; max-width: 400px; margin: auto;">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size: 40px; color: #eab308;"></i>
+            <p style="margin-top:10px; color:#e5e7eb;">প্লেলিস্ট লোড হয়নি বা নতুন প্লেলিস্ট দিন</p>
+            
+            <div class="manual-input-wrap">
+                <input type="text" id="manualIptvUrl" placeholder="https://...m3u">
+                <button onclick="loadManualUrl()">লোড</button>
+            </div>
+            
+            <div style="margin: 15px 0; color: #8b9eb0; font-size: 12px; font-weight: 600;">অথবা</div>
+            
+            <label class="file-upload-btn" style="margin-top: 0;">
+                <i class="fa-solid fa-file-arrow-up"></i> ফাইল নির্বাচন করুন
+                <input type="file" accept=".m3u,.m3u8,.txt" onchange="loadIPTVFromFile(event)" style="display:none;">
+            </label>
+        </div>
+
+        <!-- Custom Iframe Player Section -->
+        <div style="margin-bottom: 20px; border-radius: 8px; overflow: hidden; border: 1px solid var(--iptv-card-border); background: #000;">
+            <div style="background: #1f2731; padding: 8px 12px; font-size: 12px; font-weight: 600; color: #fff; border-bottom: 1px solid var(--iptv-card-border); display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-play" style="color: var(--primary-green);"></i> Web Player
+            </div>
+            <iframe 
+                src="https://play.movielinkbd.mom/watch/KGuIseIi-RMzL-G1.io5DXRbQRbyJlWVqsOVYfs8NJXU0M3ciCnUuaPYLd7nSlqkhVEnJ5WOeXlEgVIowpaG50_0E0lpI.pfvWTnCOC4Sl4L-fS9qtOw" 
+                width="100%" 
+                style="aspect-ratio: 16/9; display: block;" 
+                frameborder="0" 
+                allowfullscreen>
+            </iframe>
+        </div>
+        
+        <div id="iptvChannelGrid" class="iptv-grid" style="display:none;"></div>
+    </div>
+</div>
+
+
+<!-- ==============================================
+     VIEW 2: VIDEO PLAYER
+     ============================================== -->
+<div id="player-view">
+    
+    <!-- Central OSD for Aspect Ratio -->
+    <div id="ratio-osd" class="ratio-osd">
+        <div id="ratio-osd-title" class="osd-title">Best fit</div>
+        <div class="osd-subtitle">Tap icon to change</div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="back-btn-wrapper auto-hide">
+        <button class="back-btn" onclick="closePlayer()">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            Back
+        </button>
+    </div>
+
+    <!-- Server List Container (Dynamic) -->
+    <div id="server-list-container" class="auto-hide" style="display: none;"></div>
+
+    <!-- Notice Bar -->
+    <div id="sticky-header-notice" class="sticky-notice auto-hide">
+        <div class="marquee-wrapper">
+            <span class="marquee-text" id="marqueeTextContent">📢 ম্যাচ শুরুর পূর্বে সব সার্ভার লাইভ হয়ে যায়! টেলিগ্রামে জয়েন করুন!</span>
+        </div>
+        <button class="close-btn" onclick="document.getElementById('sticky-header-notice').style.display='none'">&times;</button>
+    </div>
+
+    <!-- ⚙ Quality Changer Button & Menu -->
+    <button class="player-float-btn auto-hide" id="btn-quality" onclick="toggleMenu('quality-menu')" title="Quality">
+        <i class="fa-solid fa-gear"></i>
+    </button>
+    <div id="quality-menu" class="floating-menu auto-hide">
+        <div class="menu-item active" onclick="selectQuality(-1, this)">Auto <span class="check">✔</span></div>
+    </div>
+
+    <!-- Aspect Ratio Button -->
+    <button class="player-float-btn auto-hide" id="btn-ratio" onclick="cycleRatio()" title="Aspect Ratio">
+        <svg viewBox="0 0 24 24"><path d="M19 12h-2v3h-3v2h5v-5zM7 9h3V7H5v5h2V9zm14-6H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z"/></svg>
+    </button>
+
+    <!-- Custom Fullscreen Button -->
+    <button class="player-float-btn auto-hide" id="btn-fullscreen" onclick="toggleFullscreenWrapper()" title="Fullscreen">
+        <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+    </button>
+
+    <!-- Player Area -->
+    <div id="player-wrapper">
+        <div id="unmute-overlay" onclick="enableSound()">
+            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+            সাউন্ড অন করুন
+        </div>
+
+        <div id="playerError" style="position:absolute; inset:0; display:none; align-items:center; justify-content:center; flex-direction:column; background:rgba(0,0,0,0.9); z-index:10; color:#fff;">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size:40px; color:#eab308; margin-bottom:12px;"></i>
+            <p>এই চ্যানেলটি প্লে করা যাচ্ছে না।</p>
+        </div>
+
+        <!-- NEW IFRAME PLAYER FOR WEB LINKS -->
+        <iframe id="iframe-player" style="display:none; width:100%; height:100%; border:none; position:absolute; inset:0; z-index:5;" allowfullscreen allow="encrypted-media"></iframe>
+
+        <video id="live-player" controls controlsList="nofullscreen nodownload noremoteplayback" playsinline preload="auto"></video>
+    </div>
+</div>
+
+
+<!-- ==============================================
+     GLOBAL BOTTOM NAVIGATION (SPA Controller)
+     ============================================== -->
+<div class="bottom-nav">
+    <div class="nav-item active" id="navBtnHome" onclick="switchView('home')">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+        <span id="homeTextLabel" style="margin-left:4px;">Live Events</span>
+    </div>
+    <div class="nav-item">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/><path d="M12 2a15.3 15.3 0 0 1 0 20M12 2a15.3 15.3 0 0 0 0 20M2 12h20" stroke="currentColor" stroke-width="2"/></svg>
+    </div>
+    <div class="nav-item" id="navBtnIPTV" onclick="switchView('iptv')">
+        <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="15" rx="2" ry="2" stroke="currentColor" stroke-width="2" fill="none"/><polyline points="17 2 12 7 7 2" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+        <span id="iptvTextLabel" style="display:none; margin-left:4px;">IPTV</span>
+    </div>
+</div>
+
+
+<!-- Hls.js Library Only -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<script>
+    /* =========================================
+       GLOBAL SPA NAVIGATION LOGIC
+       ========================================= */
+    const matchListView = document.getElementById('match-list-view');
+    const iptvListView = document.getElementById('iptv-list-view');
+    const playerView = document.getElementById('player-view');
+    
+    const navBtnHome = document.getElementById('navBtnHome');
+    const navBtnIPTV = document.getElementById('navBtnIPTV');
+    const iptvTextLabel = document.getElementById('iptvTextLabel');
+    const homeTextLabel = document.getElementById('homeTextLabel');
+
+    let previousView = 'home';
+    let currentIsIframe = false;
+
+    function switchView(target) {
+        if (target === 'home') {
+            iptvListView.style.display = 'none';
+            playerView.style.display = 'none';
+            matchListView.style.display = 'block';
+            
+            navBtnIPTV.classList.remove('active');
+            navBtnHome.classList.add('active');
+            iptvTextLabel.style.display = 'none';
+            homeTextLabel.style.display = 'inline';
+            
+            closePlayerLogic();
+            previousView = 'home';
+        } 
+        else if (target === 'iptv') {
+            matchListView.style.display = 'none';
+            playerView.style.display = 'none';
+            iptvListView.style.display = 'block';
+            
+            navBtnHome.classList.remove('active');
+            navBtnIPTV.classList.add('active');
+            iptvTextLabel.style.display = 'inline';
+            homeTextLabel.style.display = 'none';
+            
+            closePlayerLogic();
+            previousView = 'iptv';
+            
+            if(!iptvDataLoaded) { loadIPTVPlaylist(); }
+        }
+    }
+
+    /* =========================================
+       PLAYER COMMON LOGIC & FEATURES
+       ========================================= */
+    const video = document.getElementById('live-player');
+    const unmuteOverlay = document.getElementById('unmute-overlay');
+    const playerError = document.getElementById('playerError');
+    let hls = null;
+    let currentStreamUrl = "";
+    let currentRatio = 'best-fit';
+
+    function openPlayer(streamData, source = 'iptv') {
+        if (!streamData || (Array.isArray(streamData) && streamData.length === 0)) {
+            alert('লিংক এখনও অ্যাড করা হয়নি। দয়া করে এডমিনকে আপডেট করতে বলুন।');
+            return;
+        }
+        
+        matchListView.style.display = 'none';
+        iptvListView.style.display = 'none';
+        playerView.style.display = 'flex';
+        playerError.style.display = 'none';
+        
+        document.getElementById('quality-menu').style.display = 'none';
+        playerView.classList.remove('hide-ui');
+        
+        // Multi-server Support Logic
+        let serverArray = [];
+        if (typeof streamData === 'string') {
+            serverArray = [{ name: 'Default', url: streamData }];
+        } else if (Array.isArray(streamData)) {
+            serverArray = streamData;
+        }
+
+        const serverContainer = document.getElementById('server-list-container');
+        serverContainer.innerHTML = '';
+        
+        if (serverArray.length > 1) {
+            serverContainer.style.display = 'flex';
+            serverArray.forEach((srv, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `server-btn ${idx === 0 ? 'active' : ''}`;
+                btn.innerHTML = (idx === 0 ? '<svg viewBox="0 0 24 24" width="14" height="14"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' : '') + srv.name;
+                
+                btn.onclick = (e) => {
+                    e.stopPropagation(); // prevent UI hide/show toggle issue
+                    document.querySelectorAll('.server-btn').forEach(b => {
+                        b.classList.remove('active');
+                        b.innerHTML = b.textContent; // reset text, removes SVG
+                    });
+                    btn.classList.add('active');
+                    btn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' + srv.name;
+                    
+                    currentStreamUrl = srv.url;
+                    setupPlayerCore(currentStreamUrl, source);
+                };
+                serverContainer.appendChild(btn);
+            });
+        } else {
+            serverContainer.style.display = 'none';
+        }
+
+        currentStreamUrl = serverArray[0].url;
+
+        const noticeBar = document.getElementById('sticky-header-notice');
+        const marqueeText = document.getElementById('marqueeTextContent');
+        
+        if (source === 'home') {
+            noticeBar.style.display = 'flex';
+            marqueeText.innerText = "📢 ম্যাচ শুরুর পূর্বে সব সার্ভার লাইভ হয়ে যায়! টেলিগ্রামে জয়েন করুন!";
+        } else { 
+            noticeBar.style.display = 'none';
+        }
+
+        applyAspectRatio(); 
+        setupPlayerCore(currentStreamUrl, source);
+        resetPlayerIdle();
+    }
+
+    function closePlayer() {
+        closePlayerLogic();
+        switchView(previousView);
+    }
+
+    function closePlayerLogic() {
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+        if (hls) { hls.destroy(); hls = null; }
+        
+        const iframeEl = document.getElementById('iframe-player');
+        if(iframeEl) {
+            iframeEl.src = '';
+            iframeEl.style.display = 'none';
+        }
+        
+        document.getElementById('quality-menu').style.display = 'none';
+        playerView.classList.remove('hide-ui');
+        clearTimeout(playerIdleTimer);
+        
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+            if (document.exitFullscreen) { document.exitFullscreen(); } 
+            else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
+        }
+    }
+
+    window.enableSound = function() {
+        video.muted = false;
+        video.volume = 1.0;
+        video.play();
+        unmuteOverlay.style.display = 'none';
+    };
+
+    window.toggleFullscreenWrapper = function() {
+        const pView = document.getElementById('player-view');
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            if (pView.requestFullscreen) { pView.requestFullscreen(); } 
+            else if (pView.webkitRequestFullscreen) { pView.webkitRequestFullscreen(); }
+        } else {
+            if (document.exitFullscreen) { document.exitFullscreen(); } 
+            else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
+        }
+    };
+
+    window.toggleMenu = function(menuId) {
+        const menu = document.getElementById(menuId);
+        const isShowing = menu.style.display === 'flex';
+        document.getElementById('quality-menu').style.display = 'none';
+        if(!isShowing) { menu.style.display = 'flex'; }
+    };
+
+    function populateQualityMenu(levels) {
+        const qMenu = document.getElementById('quality-menu');
+        qMenu.innerHTML = `<div class="menu-item active" onclick="selectQuality(-1, this)">Auto <span class="check">✔</span></div>`;
+        if(!levels || levels.length <= 1) return; 
+        
+        let uniqueLevels = [];
+        let heights = [];
+        levels.forEach((lvl, index) => {
+            if(lvl.height && !heights.includes(lvl.height)) {
+                heights.push(lvl.height);
+                uniqueLevels.push({index: index, height: lvl.height});
+            }
+        });
+        
+        uniqueLevels.sort((a,b) => b.height - a.height);
+        
+        uniqueLevels.forEach((lvl) => {
+            let resText = lvl.height + 'p';
+            qMenu.innerHTML += `<div class="menu-item" onclick="selectQuality(${lvl.index}, this)">${resText} <span class="check">✔</span></div>`;
+        });
+    }
+
+    window.selectQuality = function(levelIndex, element) {
+        if(hls) { hls.currentLevel = levelIndex; }
+        document.querySelectorAll('#quality-menu .menu-item').forEach(item => item.classList.remove('active'));
+        if(element) element.classList.add('active');
+        document.getElementById('quality-menu').style.display = 'none';
+    };
+
+    /* --- Aspect Ratio Logic (Cycling + OSD) --- */
+    const ratiosList = [
+        { id: 'best-fit', label: 'Best fit' },
+        { id: 'fit-screen', label: 'Fit screen' },
+        { id: 'fill', label: 'Fill' },
+        { id: '16:9', label: '16:9' },
+        { id: '16:10', label: '16:10' },
+        { id: '4:3', label: '4:3' },
+        { id: 'centre', label: 'Centre' }
+    ];
+    let currentRatioIndex = 0;
+    let osdTimeout = null;
+
+    window.cycleRatio = function() {
+        currentRatioIndex = (currentRatioIndex + 1) % ratiosList.length;
+        currentRatio = ratiosList[currentRatioIndex].id;
+        applyAspectRatio();
+        showRatioOSD(ratiosList[currentRatioIndex].label);
+        resetPlayerIdle(); // Ensure UI stays awake while clicking
+    };
+
+    function showRatioOSD(text) {
+        const osd = document.getElementById('ratio-osd');
+        document.getElementById('ratio-osd-title').innerText = text;
+        osd.classList.add('show');
+        if(osdTimeout) clearTimeout(osdTimeout);
+        osdTimeout = setTimeout(() => {
+            osd.classList.remove('show');
+        }, 2000);
+    }
+
+    window.applyAspectRatio = function() {
+        const pw = document.getElementById('player-wrapper');
+        const cw = pw.clientWidth;
+        const ch = pw.clientHeight;
+        
+        video.style.transform = 'none';
+        video.style.margin = 'auto';
+
+        if(currentRatio === 'best-fit'){
+            video.style.width = '100%'; video.style.height = '100%';
+            video.style.objectFit = 'contain';
+        } else if(currentRatio === 'fit-screen'){
+            video.style.width = '100%'; video.style.height = '100%';
+            video.style.objectFit = 'fill';
+        } else if(currentRatio === 'fill'){
+            video.style.width = '100%'; video.style.height = '100%';
+            video.style.objectFit = 'cover';
+        } else if(currentRatio === 'centre'){
+            video.style.width = '100%'; video.style.height = '100%';
+            video.style.objectFit = 'none';
+        } else {
+            video.style.objectFit = 'fill';
+            let parts = currentRatio.split(':');
+            let targetR = parseFloat(parts[0]) / parseFloat(parts[1]);
+            let currentR = cw / ch;
+            
+            if (currentR > targetR) {
+                video.style.height = '100%';
+                video.style.width = (ch * targetR) + 'px';
+            } else {
+                video.style.width = '100%';
+                video.style.height = (cw / targetR) + 'px';
+            }
+        }
+    };
+
+    window.addEventListener('resize', applyAspectRatio);
+
+    function tryAutoPlay() {
+        video.muted = false; 
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => { unmuteOverlay.style.display = 'none'; })
+            .catch(error => {
+                video.muted = true;
+                video.play().then(() => { unmuteOverlay.style.display = 'flex'; })
+                .catch(e => { console.log("Autoplay blocked"); });
+            });
+        }
+    }
+
+    function setupPlayerCore(url, source) {
+        unmuteOverlay.style.display = 'none';
+        playerError.style.display = 'none';
+        
+        const videoEl = document.getElementById('live-player');
+        const iframeEl = document.getElementById('iframe-player');
+        const btnQuality = document.getElementById('btn-quality');
+        const btnRatio = document.getElementById('btn-ratio');
+        const btnFullscreen = document.getElementById('btn-fullscreen');
+        const pView = document.getElementById('player-view');
+        
+        // Iframe / Web Player Detection
+        if(url.match(/(watch|embed|player|iframe|\.html|\.php|movielink|rutube|youtube|vimeo)/i) && !url.match(/\.(m3u8|ts|mp4|mkv|flv|avi|m3u)$/i)) {
+            currentIsIframe = true;
+        } else {
+            currentIsIframe = false;
+        }
+
+        if (currentIsIframe) {
+            // Hide standard video
+            videoEl.style.display = 'none';
+            videoEl.pause();
+            videoEl.removeAttribute('src');
+            videoEl.load();
+            if(hls) { hls.destroy(); hls = null; }
+
+            // Show Iframe
+            iframeEl.style.display = 'block';
+            iframeEl.src = url;
+            
+            // Hide Custom UI Buttons
+            btnQuality.style.display = 'none';
+            btnRatio.style.display = 'none';
+            btnFullscreen.style.display = 'none';
+            
+            pView.classList.remove('hide-ui');
+            clearTimeout(playerIdleTimer);
+            return;
+        }
+
+        // Standard HLS / Video
+        iframeEl.style.display = 'none';
+        iframeEl.src = '';
+        videoEl.style.display = 'block';
+        btnQuality.style.display = 'flex'; 
+        btnRatio.style.display = 'flex';
+        btnFullscreen.style.display = 'flex';
+        
+        if (Hls.isSupported()) {
+            if (hls) { hls.destroy(); }
+            hls = new Hls({
+                maxBufferLength: 30, maxMaxBufferLength: 60,
+                liveSyncDurationCount: 2, liveMaxLatencyDurationCount: 5,
+                enableWorker: true, lowLatencyMode: true 
+            });
+            hls.loadSource(url);
+            hls.attachMedia(videoEl);
+            
+            hls.on(Hls.Events.MANIFEST_PARSED, function(event, data) { 
+                populateQualityMenu(hls.levels);
+                tryAutoPlay(); 
+            });
+            hls.on(Hls.Events.ERROR, function (event, data) {
+                if (data.fatal) {
+                    if (source === 'iptv') {
+                        playerError.style.display = 'flex';
+                    } else {
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR: hls.startLoad(); break;
+                            case Hls.ErrorTypes.MEDIA_ERROR: hls.recoverMediaError(); break;
+                            default: setTimeout(() => { setupPlayerCore(currentStreamUrl, source); }, 2000); break;
+                        }
+                    }
+                }
+            });
+        } 
+        else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+            btnQuality.style.display = 'none';
+            videoEl.src = url;
+            videoEl.addEventListener('loadedmetadata', function() { tryAutoPlay(); });
+        }
+    }
+
+    /* Auto-Hide UI Logic */
+    let playerIdleTimer;
+    
+    function resetPlayerIdle() {
+        const pView = document.getElementById('player-view');
+        pView.classList.remove('hide-ui');
+        clearTimeout(playerIdleTimer);
+        
+        if(currentIsIframe) return;
+
+        playerIdleTimer = setTimeout(() => {
+            if (!video.paused && pView.style.display === 'flex') {
+                pView.classList.add('hide-ui');
+                document.getElementById('quality-menu').style.display = 'none';
+            }
+        }, 3000);
+    }
+
+    const pViewEl = document.getElementById('player-view');
+    pViewEl.addEventListener('mousemove', resetPlayerIdle);
+    pViewEl.addEventListener('touchstart', resetPlayerIdle);
+    pViewEl.addEventListener('click', resetPlayerIdle);
+    video.addEventListener('play', resetPlayerIdle);
+    video.addEventListener('pause', () => {
+        pViewEl.classList.remove('hide-ui');
+        clearTimeout(playerIdleTimer);
+    });
+
+    video.addEventListener('volumechange', () => {
+        if (!video.muted && video.volume > 0) { unmuteOverlay.style.display = 'none'; }
+    });
+
+    function manageScreenOrientation() {
+        var isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+        if (isFullscreen) {
+            try { if (screen.orientation && screen.orientation.lock) { screen.orientation.lock('landscape').catch(e=>{}); } } catch (err) {}
+        } else {
+            try { if (screen.orientation && screen.orientation.unlock) { screen.orientation.unlock(); } } catch (err) {}
+        }
+        setTimeout(applyAspectRatio, 200); 
+    }
+    document.addEventListener('fullscreenchange', manageScreenOrientation);
+    document.addEventListener('webkitfullscreenchange', manageScreenOrientation);
+
+
+    /* ==============================================
+       IPTV PLAYLIST PARSER LOGIC
+       ============================================== */
+    let allIPTVChannels = [];
+    let iptvCategories = new Set();
+    let iptvDataLoaded = false;
+    let currentLoadedPlaylist = "";
+
+    window.loadIPTVUrl = async function(url) {
+        if (!url) return;
+        currentLoadedPlaylist = url;
+
+        const loadingIndicator = document.getElementById('iptvLoadingIndicator');
+        const fallbackUpload = document.getElementById('iptvFallbackUpload');
+        const channelGrid = document.getElementById('iptvChannelGrid');
+
+        loadingIndicator.style.display = 'flex';
+        fallbackUpload.style.display = 'none';
+        channelGrid.style.display = 'none';
+
+        try {
+            let response = await fetch(url);
+            if (!response.ok) throw new Error('Network error');
+            let text = await response.text();
+            parseIPTVM3U(text);
+            loadingIndicator.style.display = 'none';
+            channelGrid.style.display = 'grid';
+            iptvDataLoaded = true;
+        } catch (err) {
+            console.error("M3U Loading Error:", err);
+            loadingIndicator.style.display = 'none';
+            fallbackUpload.style.display = 'flex';
+        }
+    };
+
+    async function loadIPTVPlaylist() {
+        // Load default playlist
+        const defaultUrl = 'https://raw.githubusercontent.com/sanjoykb/-KB-TV-Playlist/main/Github%20Auto%20Update%20Channel.m3u';
+        loadIPTVUrl(defaultUrl);
+    }
+
+    window.loadManualUrl = function() {
+        const val = document.getElementById('manualIptvUrl').value.trim();
+        if(val) loadIPTVUrl(val);
+    };
+
+    window.loadIPTVFromFile = function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const fallbackUpload = document.getElementById('iptvFallbackUpload');
+        const loadingIndicator = document.getElementById('iptvLoadingIndicator');
+        
+        fallbackUpload.style.display = 'none';
+        loadingIndicator.style.display = 'flex';
+        loadingIndicator.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-4xl text-active-green" style="font-size: 40px; color: #20c997;"></i><p>ফাইল পড়া হচ্ছে...</p>';
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            parseIPTVM3U(e.target.result);
+            loadingIndicator.style.display = 'none';
+            document.getElementById('iptvChannelGrid').style.display = 'grid';
+            iptvDataLoaded = true;
+        };
+        reader.readAsText(file);
+    };
+
+    function parseIPTVM3U(text) {
+        const lines = text.split(/\r?\n/);
+        allIPTVChannels = [];
+        iptvCategories = new Set();
+        let currentChannel = { name: '', url: '', logo: '', group: 'UNCATEGORIZED' };
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line.startsWith('#EXTINF:')) {
+                const groupMatch = line.match(/group-title="([^"]+)"/);
+                if (groupMatch && groupMatch[1].trim()) {
+                    currentChannel.group = groupMatch[1].trim();
+                    iptvCategories.add(currentChannel.group);
+                }
+                const logoMatch = line.match(/tvg-logo="([^"]+)"/);
+                currentChannel.logo = logoMatch ? logoMatch[1].trim() : '';
+
+                const nameParts = line.split(',');
+                currentChannel.name = nameParts.length > 1 ? nameParts.pop().trim() : 'Unknown Channel';
+            } 
+            else if (line !== '' && !line.startsWith('#')) {
+                currentChannel.url = line;
+                if(currentChannel.url) { allIPTVChannels.push({...currentChannel}); }
+                currentChannel = { name: '', url: '', logo: '', group: 'UNCATEGORIZED' };
+            }
+        }
+        
+        document.getElementById('iptvCatLoadingText').style.display = 'none';
+        renderIPTVCategories();
+        renderIPTVGrid('ALL');
+    }
+
+    function renderIPTVCategories() {
+        const container = document.getElementById('iptvCategoryContainer');
+        let html = `<span class="iptv-cat-item iptv-cat-active" onclick="filterIPTVCategory('ALL', this)">ALL</span>`;
+        Array.from(iptvCategories).sort().forEach(cat => {
+            html += `<span class="iptv-cat-item" onclick="filterIPTVCategory('${cat.replace(/'/g, "\\'")}', this)">${cat}</span>`;
+        });
+        container.innerHTML = html;
+    }
+
+    window.filterIPTVCategory = function(categoryName, element) {
+        if(element) {
+            document.querySelectorAll('.iptv-cat-item').forEach(el => el.classList.remove('iptv-cat-active'));
+            element.classList.add('iptv-cat-active');
+            element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+        renderIPTVGrid(categoryName);
+    };
+
+    function renderIPTVGrid(categoryFilter) {
+        const filteredChannels = categoryFilter === 'ALL' ? allIPTVChannels : allIPTVChannels.filter(c => c.group === categoryFilter);
+        renderGridHTML(filteredChannels);
+    }
+
+    function renderGridHTML(channels) {
+        const grid = document.getElementById('iptvChannelGrid');
+        if (!channels.length) {
+            grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #9ca3af; padding: 40px;">কোনো চ্যানেল পাওয়া যায়নি</div>';
+            return;
+        }
+        
+        grid.innerHTML = channels.map(ch => {
+            const safeUrl = ch.url.replace(/'/g, "\\'");
+            const logoHtml = ch.logo 
+                ? `<img src="${ch.logo}" onerror="this.parentElement.innerHTML='<i class=\\\'fa-solid fa-tv\\\'></i>'">`
+                : `<i class="fa-solid fa-tv"></i>`;
+                
+            return `
+                <div class="iptv-card" onclick="openPlayer('${safeUrl}', 'iptv')">
+                    <div class="iptv-logo-box">${logoHtml}</div>
+                    <div class="iptv-name">${ch.name}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+</script>
+
+<!-- EffectiveCPM Ads -->
+<script src="https://pl18985032.effectivecpmnetwork.com/55/f3/06/55f3066ed55833a836f391b663a29b55.js"></script>
+<script src="https://pl20213750.effectivecpmnetwork.com/95/bd/48/95bd48127f2c916d122b5cae3b2337f4.js"></script>
+
+<!-- Cloudflare Pages Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "9a7ac05683e94506ade95ade3dcfdbf3"}'></script><!-- Cloudflare Pages Analytics --></body>
+</html>
+
+
