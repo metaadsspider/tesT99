@@ -1,589 +1,333 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Player</title>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { background: #000; height: 100vh; width: 100vw; overflow: hidden; overscroll-behavior: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    .shaka-video-container { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; overflow: hidden; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-    .shaka-video-container.cursor-hidden { cursor: none; }
-    video { width: 100%; height: 100%; background: #000; object-fit: contain; transition: object-fit 0.25s ease-in-out; touch-action: none; }
-    .shaka-spinner-container { display: none !important; }
-    .shaka-bottom-controls { display: flex !important; flex-direction: column !important; padding-bottom: calc(2.5% + env(safe-area-inset-bottom, 0px)) !important; }
+
+    html, body {
+      background: #000;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .shaka-video-container {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      object-fit: contain;
+      transition: object-fit 0.25s ease-in-out;
+    }
+
+    .shaka-spinner-container {
+      display: none !important;
+    }
+
+    .shaka-bottom-controls {
+      display: flex !important;
+      flex-direction: column !important;
+    }
+
     .shaka-seek-bar-container { order: 1 !important; }
     .shaka-controls-button-panel { order: 2 !important; }
 
-    /* Soft gradient scrims (visible while controls are up) */
-    .scrim { position: absolute; left: 0; right: 0; pointer-events: none; z-index: 1; opacity: 0; transition: opacity 0.3s ease; }
-    .scrim-top { top: 0; height: 100px; background: linear-gradient(180deg, rgba(0,0,0,0.55), transparent); }
-    .scrim-bottom { bottom: 0; height: 150px; background: linear-gradient(0deg, rgba(0,0,0,0.72), transparent); }
-    .shaka-video-container.ui-visible .scrim { opacity: 1; }
+    .custom-icon-btn {
+      background: none;
+      border: none;
+      padding: 0 5px;
+      color: rgba(255, 255, 255, 0.9);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s, transform 0.2s;
+    }
 
-    /* Custom loading spinner */
-    .custom-spinner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 58px; height: 58px; z-index: 800; opacity: 0; transition: opacity 0.25s ease; pointer-events: none; }
-    .custom-spinner.show { opacity: 1; }
-    .spinner-arc { width: 100%; height: 100%; border-radius: 50%; border: 4px solid rgba(255,255,255,0.14); border-top-color: #e74c3c; animation: spin 0.9s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .custom-icon-btn:hover {
+      color: #fff;
+      transform: scale(1.1);
+    }
 
-    /* Center play/pause pulse feedback */
-    .pulse-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 850; pointer-events: none; opacity: 0; }
-    .pulse-icon i { font-size: 66px; color: rgba(255,255,255,0.94); text-shadow: 0 4px 26px rgba(0,0,0,0.65); }
-    .pulse-icon.animate { animation: pulseFade 0.55s ease-out forwards; }
-    @keyframes pulseFade { 0% { opacity: 0; transform: translate(-50%,-50%) scale(0.72); } 22% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.28); } }
+    .toast-message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: 500;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 2000;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
 
-    /* Toast */
-    .toast-message { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: rgba(0, 0, 0, 0.7); color: white; padding: 12px 24px; border-radius: 30px; font-size: 16px; font-weight: 500; pointer-events: none; opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2000; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.1); }
-    .toast-message.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    .toast-message.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
 
-    /* Double-tap seek ripple */
-    .ripple-layer { position: absolute; inset: 0; z-index: 2500; pointer-events: none; overflow: hidden; }
-    .ripple { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; pointer-events: none; animation: ripplePop 0.65s ease-out forwards; }
-    .ripple-circle { width: 66px; height: 66px; border-radius: 50%; background: rgba(255,255,255,0.16); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 18px rgba(0,0,0,0.4); }
-    .ripple-circle i { font-size: 36px; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
-    @keyframes ripplePop { 0% { transform: translate(-50%,-50%) scale(0.7); opacity: 0; } 18% { transform: translate(-50%,-50%) scale(1); opacity: 1; } 75% { opacity: 1; } 100% { transform: translate(-50%,-50%) scale(1.18); opacity: 0; } }
+    .shaka-settings-menu,
+    .shaka-overflow-menu {
+      background-color: rgba(15, 15, 15, 0.95) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      border-radius: 8px !important;
+      backdrop-filter: blur(5px);
+    }
 
-    /* Volume / brightness gesture HUD */
-    .gesture-hud { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1500; display: flex; flex-direction: column; align-items: center; gap: 9px; padding: 16px 24px; background: rgba(0,0,0,0.62); border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); pointer-events: none; opacity: 0; transition: opacity 0.18s ease; }
-    .gesture-hud.show { opacity: 1; }
-    .gesture-hud i { font-size: 32px; color: #fff; }
-    .hud-label { color: rgba(255,255,255,0.95); font-size: 14px; font-weight: 600; }
-    .hud-bar { width: 130px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.22); overflow: hidden; }
-    .hud-fill { height: 100%; border-radius: 2px; background: #e74c3c; width: 0%; transition: width 0.06s linear; }
+    .shaka-settings-menu button,
+    .shaka-overflow-menu button {
+      color: #ffffff !important;
+      background-color: transparent !important;
+      transition: background 0.2s;
+    }
 
-    /* Tap-to-unmute pill (muted autoplay) */
-    .unmute-pill { position: absolute; left: 16px; bottom: 112px; z-index: 900; display: none; align-items: center; gap: 8px; background: rgba(20,20,20,0.78); border: 1px solid rgba(255,255,255,0.16); color: #fff; padding: 9px 16px; border-radius: 26px; font-size: 13px; font-weight: 600; cursor: pointer; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
-    .unmute-pill.show { display: flex; animation: pillIn 0.28s ease; }
-    .unmute-pill i { font-size: 18px; color: #e74c3c; }
-    @keyframes pillIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .shaka-settings-menu button:hover,
+    .shaka-overflow-menu button:hover {
+      background-color: rgba(255, 255, 255, 0.15) !important;
+    }
 
-    /* LIVE badge (built-in shaka button + fallback pill) */
-    .shaka-live-button, .live-pill { display: inline-flex !important; align-items: center; gap: 6px; margin: 0 4px; padding: 5px 12px !important; border-radius: 18px; font-size: 11px !important; font-weight: 700; letter-spacing: 0.6px; color: #fff !important; background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.16); cursor: pointer; min-height: 30px; }
-    .shaka-live-button::before, .live-pill .live-dot { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #e74c3c; animation: livePulse 1.6s ease-out infinite; flex: none; }
-    .live-pill { border: 1px solid rgba(255,255,255,0.16); font-family: inherit; }
-    .live-pill.behind { background: #e74c3c; border-color: #e74c3c; }
-    .live-pill.behind .live-dot { background: rgba(255,255,255,0.85); animation: none; box-shadow: none; }
-    @keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(231,76,60,0.65); } 70% { box-shadow: 0 0 0 7px rgba(231,76,60,0); } 100% { box-shadow: 0 0 0 0 rgba(231,76,60,0); } }
-
-    /* Custom buttons (PiP / aspect ratio) */
-    .custom-icon-btn { background: none; border: none; padding: 0 5px; color: rgba(255, 255, 255, 0.9); cursor: pointer; display: flex; align-items: center; transition: color 0.2s, transform 0.2s; }
-    .custom-icon-btn:hover { color: #fff; transform: scale(1.1); }
-
-    /* Control bar polish */
-    .shaka-controls-button-panel button { min-width: 42px; min-height: 42px; }
-    .shaka-controls-button-panel .material-icons-round { font-size: 25px; text-shadow: 0 1px 5px rgba(0,0,0,0.55); }
-    .shaka-controls-button-panel button:hover { color: #fff; }
-    .shaka-range-container input[type="range"] { height: 5px; }
-    .shaka-range-container input[type="range"]::-webkit-slider-runnable-track { height: 5px; border-radius: 3px; }
-    .shaka-range-container input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 13px; height: 13px; border-radius: 50%; background: #fff; border: 2.5px solid #e74c3c; margin-top: -4px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); cursor: pointer; transition: transform 0.12s ease; }
-    .shaka-range-container input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.4); }
-    .shaka-range-container input[type="range"]::-moz-range-thumb { width: 13px; height: 13px; border-radius: 50%; background: #fff; border: 2.5px solid #e74c3c; box-shadow: 0 2px 8px rgba(0,0,0,0.5); cursor: pointer; }
-    .shaka-current-time, .shaka-duration { font-size: 13px !important; color: rgba(255,255,255,0.88) !important; font-variant-numeric: tabular-nums; }
-
-    /* Menus */
-    .shaka-settings-menu, .shaka-overflow-menu { background-color: rgba(15, 15, 15, 0.95) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 8px !important; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
-    .shaka-settings-menu button, .shaka-overflow-menu button { color: #ffffff !important; background-color: transparent !important; transition: background 0.2s; }
-    .shaka-settings-menu button:hover, .shaka-overflow-menu button:hover { background-color: rgba(255, 255, 255, 0.15) !important; }
-    .shaka-settings-menu i, .shaka-overflow-menu i, .shaka-settings-menu span, .shaka-overflow-menu span { color: #ffffff !important; }
-    .shaka-settings-menu span, .shaka-overflow-menu span { font-size: 14px; }
-
-    /* Error overlay */
-    .error-overlay { position: absolute; inset: 0; z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 24px; background: rgba(0,0,0,0.88); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-    .error-overlay.show { display: flex; }
-    .error-overlay i { font-size: 46px; color: rgba(255,255,255,0.5); margin-bottom: 6px; }
-    .error-title { color: #fff; font-size: 17px; font-weight: 700; }
-    .error-detail { color: rgba(255,255,255,0.55); font-size: 13px; line-height: 1.5; max-width: 440px; margin-bottom: 14px; word-break: break-word; }
-    .retry-btn { display: inline-flex; align-items: center; gap: 8px; background: #e74c3c; color: #fff; border: none; padding: 11px 30px; border-radius: 26px; font-size: 14px; font-weight: 700; cursor: pointer; transition: transform 0.15s ease, background 0.2s; }
-    .retry-btn:hover { background: #ef5f4f; }
-    .retry-btn:active { transform: scale(0.96); }
-    .retry-btn i { font-size: 19px; color: #fff; margin: 0; }
+    .shaka-settings-menu i,
+    .shaka-overflow-menu i,
+    .shaka-settings-menu span,
+    .shaka-overflow-menu span {
+      color: #ffffff !important;
+    }
   </style>
 </head>
+
 <body>
   <div class="shaka-video-container" id="video-container">
-    <video autoplay playsinline muted preload="auto" id="video"></video>
-    <div class="scrim scrim-top"></div>
-    <div class="scrim scrim-bottom"></div>
-    <div id="spinner" class="custom-spinner"><div class="spinner-arc"></div></div>
-    <div id="pulse" class="pulse-icon"><i class="material-icons-round">play_arrow</i></div>
-    <div id="gestureHud" class="gesture-hud"><i class="material-icons-round hud-icon">volume_up</i><div class="hud-label"></div><div class="hud-bar"><div class="hud-fill"></div></div></div>
-    <div id="unmutePill" class="unmute-pill"><i class="material-icons-round">volume_off</i><span>Tap to unmute</span></div>
-    <div id="rippleLayer" class="ripple-layer"></div>
+
+    <video
+      autoplay
+      playsinline
+      muted
+      preload="auto"
+      id="video"
+      poster="https://i.ibb.co.com/HTtcHPc6/CRIC-FLIXS.webp">
+    </video>
+
     <div id="toast" class="toast-message">Original</div>
-    <div id="errorOverlay" class="error-overlay">
-      <i class="material-icons-round">wifi_off</i>
-      <div class="error-title" id="errorTitle">Stream unavailable</div>
-      <div class="error-detail" id="errorDetail"></div>
-      <button class="retry-btn" id="retryBtn"><i class="material-icons-round">refresh</i>Retry</button>
-    </div>
   </div>
 
   <script>
-    const video = document.getElementById('video'),
-          toast = document.getElementById('toast'),
-          container = document.getElementById('video-container'),
-          spinner = document.getElementById('spinner'),
-          pulseEl = document.getElementById('pulse'),
-          pulseIconEl = pulseEl.querySelector('i'),
-          hud = document.getElementById('gestureHud'),
-          hudIcon = hud.querySelector('.hud-icon'),
-          hudLabel = hud.querySelector('.hud-label'),
-          hudFill = hud.querySelector('.hud-fill'),
-          unmutePill = document.getElementById('unmutePill'),
-          rippleLayer = document.getElementById('rippleLayer'),
-          errorOverlay = document.getElementById('errorOverlay'),
-          errorTitle = document.getElementById('errorTitle'),
-          errorDetail = document.getElementById('errorDetail'),
-          retryBtn = document.getElementById('retryBtn');
+    const video = document.getElementById('video');
+    const toast = document.getElementById('toast');
+    const container = document.getElementById('video-container');
 
-    const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
-    let toastTimeout, hudHideTimer, cursorTimer, player = null;
+    let toastTimeout;
+    let currentRatioIndex = 0;
 
-    /* ---------------- Toast ---------------- */
-    function showToast(message, ms = 1500) {
-      toast.innerText = message;
-      toast.classList.add('show');
-      clearTimeout(toastTimeout);
-      toastTimeout = setTimeout(() => toast.classList.remove('show'), ms);
-    }
-
-    /* ---------------- DRM keys / stream (hardcoded) ---------------- */
-    function parseKeys(input) {
-      let keys = {};
-      input.split(',').forEach(pair => { let [kid, key] = pair.trim().split(':'); if (kid && key) keys[kid] = key; });
-      return keys;
-    }
-    let rawKeys = "b4d7fc89103597185058cc4c81a1800d:17062472ba2a3f1db709d3bb7761c936";
-    let streamUrl = "https://soft-water-8070.sphub-tech.workers.dev/npl/npl-live.mpd";
-
-    /* ---------------- Aspect ratio ---------------- */
     const ratioModes = [
       { mode: 'contain', name: 'Original', icon: 'aspect_ratio' },
       { mode: 'fill', name: 'Stretch', icon: 'settings_overscan' },
       { mode: 'cover', name: 'Zoom (Fill)', icon: 'crop_free' }
     ];
-    let currentRatioIndex = 0, ratioIcon = null;
-    function applyRatio() { video.style.objectFit = ratioModes[currentRatioIndex].mode; }
-    function syncRatioIcon() { if (ratioIcon) ratioIcon.innerHTML = '<i class="material-icons-round" style="font-size:24px;">' + ratioModes[currentRatioIndex].icon + '</i>'; }
-    function cycleRatio() {
-      currentRatioIndex = (currentRatioIndex + 1) % ratioModes.length;
-      applyRatio(); syncRatioIcon();
-      showToast(ratioModes[currentRatioIndex].name);
-      savePrefs();
+
+    function showToast(message) {
+      toast.innerText = message;
+      toast.classList.add('show');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(
+        () => toast.classList.remove('show'),
+        1500
+      );
     }
 
-    /* ---------------- Playback helpers ---------------- */
-    function togglePlay() { video.paused ? video.play().catch(() => {}) : video.pause(); }
-    async function toggleFullscreen() {
-      try {
-        if (document.fullscreenElement) { await document.exitFullscreen(); return; }
-        if (container.requestFullscreen) await container.requestFullscreen();
-        else if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
-        else showToast('Fullscreen not supported');
-      } catch (e) { showToast('Fullscreen unavailable'); }
-    }
-    async function togglePip() {
-      try {
-        if (video !== document.pictureInPictureElement) await video.requestPictureInPicture();
-        else await document.exitPictureInPicture();
-      } catch (err) { showToast('Picture-in-Picture unavailable'); }
-    }
-    function toggleMute() {
-      video.muted = !video.muted;
-      if (!video.muted && video.volume <= 0) video.volume = 1;
-      showToast(video.muted ? 'Muted' : 'Volume ' + Math.round(video.volume * 100) + '%');
-    }
-    function applyVolume(v) {
-      v = clamp(v, 0, 1);
-      video.muted = v <= 0.001;
-      video.volume = v;
-    }
-    function nudgeVolume(d) {
-      const v = clamp((video.muted ? 0 : video.volume) + d, 0, 1);
-      applyVolume(v);
-      showToast(v <= 0.001 ? 'Muted' : 'Volume ' + Math.round(v * 100) + '%');
-    }
-    function seekBy(d) {
-      const s = video.seekable;
-      if (!s || !s.length) { showToast('Live - no seeking'); return; }
-      const start = s.start(0), end = s.end(s.length - 1);
-      video.currentTime = clamp(video.currentTime + d, start + 0.5, Math.max(start + 0.5, end - 0.5));
-      showToast((d > 0 ? '+' : '-') + Math.abs(d) + 's', 900);
-    }
-    function seekToPercent(p) {
-      const s = video.seekable;
-      if (!s || !s.length) { showToast('Live - no seeking'); return; }
-      const start = s.start(0), end = s.end(s.length - 1);
-      video.currentTime = start + (end - start) * p;
-      showToast(Math.round(p * 100) + '%', 900);
-    }
-    function jumpToLive() {
-      try {
-        const s = video.seekable;
-        if (s && s.length) video.currentTime = s.end(s.length - 1) - 0.5;
-        video.play().catch(() => {});
-        showToast('Live', 900);
-      } catch (e) {}
-    }
-    function toggleCaptions() {
-      try {
-        if (!player) return;
-        if (player.isTextTrackVisible()) { player.setTextTrackVisibility(false); showToast('Subtitles off'); return; }
-        const tracks = player.getTextTracks();
-        if (tracks && tracks.length) {
-          player.selectTextTrack(tracks[0]);
-          player.setTextTrackVisibility(true);
-          showToast('Subtitles on');
-        } else showToast('No subtitles available');
-      } catch (e) { showToast('Subtitles unavailable'); }
+    function applyRatio() {
+      video.style.objectFit = ratioModes[currentRatioIndex].mode;
     }
 
-    /* ---------------- Spinner / pulse ---------------- */
-    function showSpinner() { spinner.classList.add('show'); }
-    function hideSpinner() { spinner.classList.remove('show'); }
-    function pulse(name) {
-      pulseIconEl.textContent = name;
-      pulseEl.classList.remove('animate');
-      void pulseEl.offsetWidth;
-      pulseEl.classList.add('animate');
+    function parseKeys(input) {
+      let keys = {};
+
+      input.split(',').forEach(pair => {
+        let [kid, key] = pair.trim().split(':');
+        if (kid && key) keys[kid] = key;
+      });
+
+      return keys;
     }
 
-    /* ---------------- Error overlay ---------------- */
-    function friendlyCategoryTitle(cat) {
-      return ({ 1: 'Network error', 2: 'Text error', 3: 'Media error', 4: 'Manifest error', 5: 'Streaming error', 6: 'DRM error', 7: 'Player error' })[cat] || 'Stream unavailable';
-    }
-    function describeError(e) {
-      if (!e) return 'Please try again.';
-      let msg = e.message || '';
-      if (/^Shaka Error \d+$/.test(msg)) msg = 'The stream could not be loaded or decrypted' + (e.code ? ' (code ' + e.code + ')' : '');
-      else if (!msg) msg = e.code ? 'Error code ' + e.code : 'Please try again.';
-      return msg;
-    }
-    function showError(title, detail) {
-      hideSpinner();
-      errorTitle.textContent = title;
-      errorDetail.textContent = detail || 'Please try again.';
-      errorOverlay.classList.add('show');
-    }
-    function hideError() { errorOverlay.classList.remove('show'); }
-    retryBtn.addEventListener('click', async () => {
-      if (!player) { location.reload(); return; }
-      hideError(); showSpinner();
-      try { await player.unload(); } catch (e) {}
-      try { await player.load(streamUrl); applyRatio(); injectLiveFallback(); }
-      catch (e) { showError(friendlyCategoryTitle(e && e.category), describeError(e)); }
-    });
-
-    /* ---------------- LIVE badge fallback (if built-in 'live' missing) ---------------- */
-    let liveFallbackTimer = null;
-    function injectLiveFallback(attempt = 0) {
-      if (!player) return;
-      const panel = container.querySelector('.shaka-controls-button-panel');
-      if (!panel) { if (attempt < 20) setTimeout(() => injectLiveFallback(attempt + 1), 500); return; }
-      if (container.querySelector('.shaka-live-button, .live-pill')) return;
-      let isLive = true;
-      try { isLive = player.isLive(); } catch (e) {}
-      if (!isLive) return;
-      const pill = document.createElement('button');
-      pill.className = 'live-pill';
-      pill.innerHTML = '<span class="live-dot"></span><span class="live-text">LIVE</span>';
-      const ref = panel.children[3] || null;
-      panel.insertBefore(pill, ref);
-      pill.addEventListener('click', (e) => { e.stopPropagation(); jumpToLive(); });
-      const update = () => {
-        if (!document.contains(pill)) { clearInterval(liveFallbackTimer); return; }
-        const s = video.seekable;
-        let behind = false;
-        if (s && s.length) behind = (s.end(s.length - 1) - video.currentTime) > 15;
-        pill.classList.toggle('behind', behind);
-        pill.querySelector('.live-text').textContent = behind ? 'GO LIVE' : 'LIVE';
-      };
-      clearInterval(liveFallbackTimer);
-      liveFallbackTimer = setInterval(update, 1000);
-      video.addEventListener('timeupdate', update);
-      update();
-    }
-
-    /* ---------------- Gestures (touch) ---------------- */
-    const EXCLUDE = 'button, input, [role="button"], .shaka-range-container, .shaka-settings-menu, .shaka-overflow-menu, .shaka-bottom-controls, .shaka-spacer';
-    const gestureState = { active: false, x: 0, y: 0, t: 0, mode: null, vol: 0, bright: 1 };
-    let lastTap = { x: 0, y: 0, t: 0 }, dblTapGuard = 0, brightness = 1;
-
-    // Some platforms (iOS Safari) block programmatic volume: fall back to brightness on both halves.
-    const volumeSettable = (() => {
-      try {
-        const v = video.volume;
-        const test = v > 0.5 ? v - 0.1 : v + 0.1;
-        video.volume = test;
-        const ok = Math.abs(video.volume - test) < 0.001;
-        video.volume = v;
-        return ok;
-      } catch (e) { return false; }
-    })();
-
-    function showHud(icon, label, frac) {
-      hudIcon.textContent = icon;
-      hudLabel.textContent = label;
-      hudFill.style.width = (clamp(frac, 0, 1) * 100) + '%';
-      hud.classList.add('show');
-      clearTimeout(hudHideTimer);
-    }
-    function scheduleHudHide() {
-      clearTimeout(hudHideTimer);
-      hudHideTimer = setTimeout(() => hud.classList.remove('show'), 600);
-    }
-    function showRipple(x, y, icon) {
-      const r = container.getBoundingClientRect();
-      x = clamp(x, 70, r.width - 70); y = clamp(y, 70, r.height - 70);
-      const el = document.createElement('div');
-      el.className = 'ripple';
-      el.innerHTML = '<div class="ripple-circle"><i class="material-icons-round">' + icon + '</i></div>';
-      el.style.left = x + 'px'; el.style.top = y + 'px';
-      rippleLayer.appendChild(el);
-      setTimeout(() => el.remove(), 700);
-    }
-
-    container.addEventListener('touchstart', (e) => {
-      if (e.touches.length !== 1) { gestureState.active = false; return; }
-      if (e.target.closest && e.target.closest(EXCLUDE)) { gestureState.active = false; return; }
-      const t = e.touches[0];
-      gestureState.active = true; gestureState.mode = null;
-      gestureState.x = t.clientX; gestureState.y = t.clientY; gestureState.t = Date.now();
-      gestureState.vol = video.muted ? 0 : video.volume;
-      gestureState.bright = brightness;
-    }, { capture: true, passive: true });
-
-    container.addEventListener('touchmove', (e) => {
-      if (!gestureState.active) return;
-      const t = e.touches[0], dx = t.clientX - gestureState.x, dy = t.clientY - gestureState.y;
-      if (!gestureState.mode) {
-        if (Math.abs(dy) > 22 && Math.abs(dy) > Math.abs(dx)) {
-          const r = container.getBoundingClientRect();
-          gestureState.mode = (gestureState.x - r.left < r.width / 2) ? 'brightness' : (volumeSettable ? 'volume' : 'brightness');
-        } else if (Math.abs(dx) > 22) { gestureState.mode = 'ignore'; }
-      }
-      if (gestureState.mode === 'volume' || gestureState.mode === 'brightness') {
-        e.preventDefault();
-        const r = container.getBoundingClientRect();
-        const frac = clamp(-dy / (r.height * 0.55), -1, 1);
-        if (gestureState.mode === 'volume') {
-          const v = clamp(gestureState.vol + frac, 0, 1);
-          applyVolume(v);
-          showHud(v <= 0.001 ? 'volume_off' : 'volume_up', 'Volume ' + Math.round(v * 100) + '%', v);
-        } else {
-          const b = clamp(gestureState.bright + frac * 0.75, 0.1, 1.5);
-          brightness = b; video.style.filter = 'brightness(' + b + ')';
-          showHud('brightness_6', 'Brightness ' + Math.round(((b - 0.1) / 1.4) * 100) + '%', (b - 0.1) / 1.4);
-        }
-      }
-    }, { capture: true, passive: false });
-
-    container.addEventListener('touchend', (e) => {
-      if (!gestureState.active) return;
-      gestureState.active = false;
-      scheduleHudHide();
-      const t = e.changedTouches[0];
-      const dist = Math.hypot(t.clientX - gestureState.x, t.clientY - gestureState.y);
-      const dur = Date.now() - gestureState.t;
-      if (dist < 14 && dur < 300 && !gestureState.mode) {
-        const now = Date.now();
-        if (now - lastTap.t < 320 && Math.abs(t.clientX - lastTap.x) < 55 && Math.abs(t.clientY - lastTap.y) < 55) {
-          lastTap.t = 0; dblTapGuard = now;
-          const r = container.getBoundingClientRect(), x = t.clientX - r.left, w = r.width;
-          if (x < w * 0.35) { seekBy(-10); showRipple(x, t.clientY - r.top, 'replay_10'); }
-          else if (x > w * 0.65) { seekBy(10); showRipple(x, t.clientY - r.top, 'forward_10'); }
-          else { toggleFullscreen(); }
-        } else { lastTap = { x: t.clientX, y: t.clientY, t: now }; }
-      }
-    }, { capture: true, passive: true });
-
-    /* Desktop double-click fullscreen (touch handled above) */
-    container.addEventListener('dblclick', (e) => {
-      if (Date.now() - dblTapGuard < 700) return;
-      if (e.target.closest && e.target.closest(EXCLUDE)) return;
-      toggleFullscreen();
-    });
-
-    /* ---------------- Keyboard shortcuts ---------------- */
-    document.addEventListener('keydown', (e) => {
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
-      const tag = (e.target.tagName || '').toUpperCase();
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) return;
-      if (e.target.closest && e.target.closest('.shaka-settings-menu, .shaka-overflow-menu')) return;
-      const k = e.key;
-      if (k === ' ' || k === 'Spacebar' || k === 'k' || k === 'K') { e.preventDefault(); togglePlay(); }
-      else if (k === 'ArrowRight' || k === 'l' || k === 'L') { e.preventDefault(); seekBy(10); }
-      else if (k === 'ArrowLeft' || k === 'j' || k === 'J') { e.preventDefault(); seekBy(-10); }
-      else if (k === 'ArrowUp') { e.preventDefault(); nudgeVolume(0.05); }
-      else if (k === 'ArrowDown') { e.preventDefault(); nudgeVolume(-0.05); }
-      else if (k === 'm' || k === 'M') { toggleMute(); }
-      else if (k === 'f' || k === 'F') { toggleFullscreen(); }
-      else if (k === 'p' || k === 'P') { togglePip(); }
-      else if (k === 'c' || k === 'C') { toggleCaptions(); }
-      else if (k === 'a' || k === 'A') { cycleRatio(); }
-      else if (/^[0-9]$/.test(k)) { seekToPercent(parseInt(k, 10) / 10); }
-    });
-
-    /* ---------------- Preferences (volume / ratio) ---------------- */
-    let prefsTimer = null;
-    function restorePrefs() {
-      try {
-        const p = JSON.parse(localStorage.getItem('cf-player-prefs') || '{}');
-        if (typeof p.volume === 'number') video.volume = clamp(p.volume, 0, 1);
-        if (typeof p.ratio === 'number' && p.ratio >= 0 && p.ratio < ratioModes.length) currentRatioIndex = p.ratio;
-      } catch (e) {}
-    }
-    function savePrefs() {
-      clearTimeout(prefsTimer);
-      prefsTimer = setTimeout(() => {
-        try { localStorage.setItem('cf-player-prefs', JSON.stringify({ volume: video.volume, ratio: currentRatioIndex })); } catch (e) {}
-      }, 300);
-    }
-
-    /* ---------------- Video / player events ---------------- */
-    let seekSpinnerTimer = null, firstPlaySeen = false, pillShown = false;
-    video.addEventListener('loadstart', showSpinner);
-    video.addEventListener('waiting', showSpinner);
-    video.addEventListener('seeking', () => { clearTimeout(seekSpinnerTimer); seekSpinnerTimer = setTimeout(showSpinner, 400); });
-    video.addEventListener('seeked', () => { clearTimeout(seekSpinnerTimer); hideSpinner(); });
-    video.addEventListener('playing', hideSpinner);
-    video.addEventListener('canplay', hideSpinner);
-    video.addEventListener('play', () => { if (firstPlaySeen) pulse('play_arrow'); firstPlaySeen = true; });
-    video.addEventListener('pause', () => { if (firstPlaySeen) pulse('pause'); });
-    video.addEventListener('volumechange', () => {
-      if (!video.muted && video.volume > 0) unmutePill.classList.remove('show');
-      savePrefs();
-    });
-    video.addEventListener('playing', () => {
-      if (!pillShown && video.muted) {
-        pillShown = true;
-        setTimeout(() => { if (video.muted) unmutePill.classList.add('show'); }, 600);
-        setTimeout(() => unmutePill.classList.remove('show'), 12000);
-      }
-    });
-    unmutePill.addEventListener('click', () => {
-      video.muted = false;
-      if (video.volume <= 0) video.volume = 1;
-      unmutePill.classList.remove('show');
-    });
-    video.addEventListener('error', () => {
-      if (video.error && video.src) showError('Playback error', 'The stream could not be played.');
-    });
-    video.addEventListener('dragstart', (e) => e.preventDefault());
-    video.addEventListener('contextmenu', (e) => e.preventDefault());
-
-    function onPlayerError(e) {
-      const d = e.detail || {};
-      const critical = d.severity !== 1; // 1 = RECOVERABLE
-      if (critical) showError(friendlyCategoryTitle(d.category), describeError(d));
-      else { showSpinner(); showToast('Reconnecting…', 2000); }
-    }
-
-    /* ---------------- Cursor auto-hide ---------------- */
-    container.addEventListener('mousemove', () => {
-      container.classList.remove('cursor-hidden');
-      clearTimeout(cursorTimer);
-      cursorTimer = setTimeout(() => container.classList.add('cursor-hidden'), 3000);
-    });
-
-    /* ---------------- Sync scrims with control visibility ---------------- */
-    function syncControlsVisualState() {
-      const el = container.querySelector('.shaka-controls-container');
-      if (!el) return;
-      const cs = getComputedStyle(el);
-      const visible = cs.display !== 'none' && cs.visibility !== 'hidden' && parseFloat(cs.opacity || '1') > 0.05;
-      container.classList.toggle('ui-visible', visible);
-    }
-    function watchControls() {
-      const el = container.querySelector('.shaka-controls-container');
-      if (el) {
-        try { new MutationObserver(syncControlsVisualState).observe(el, { attributes: true, attributeFilter: ['class', 'style'] }); } catch (e) {}
-      }
-      try { new MutationObserver(syncControlsVisualState).observe(container, { attributes: true, attributeFilter: ['class', 'style'] }); } catch (e) {}
-      setInterval(syncControlsVisualState, 800);
-    }
-
-    /* ---------------- Boot ---------------- */
     document.addEventListener('DOMContentLoaded', async () => {
-      if (typeof shaka === 'undefined') {
-        showError('Player failed to load', 'The player library could not be downloaded. Check your connection and refresh the page.');
-        return;
-      }
+
       shaka.polyfill.installAll();
-      if (!shaka.Player.isBrowserSupported()) {
-        showError('Browser not supported', 'Please use a modern browser such as Chrome, Edge or Firefox.');
-        return;
-      }
 
-      restorePrefs();
-      applyRatio();
+      if (!shaka.Player.isBrowserSupported()) return;
 
-      player = new shaka.Player();
+      const player = new shaka.Player();
       await player.attach(video);
-      const ui = new shaka.ui.Overlay(player, container, video);
+
+      const ui = new shaka.ui.Overlay(
+        player,
+        container,
+        video
+      );
 
       ui.configure({
         fadeDelay: 3,
-        enableKeyboardPlaybackControls: false, // custom shortcuts below
-        doubleClickForFullscreen: false,      // custom double-tap handling
-        controlPanelElements: ['play_pause', 'mute', 'volume', 'spacer', 'language', 'quality', 'fullscreen'],
-        volumeBarColors: { base: 'rgba(255, 255, 255, 0.3)', level: '#e74c3c' },
-        seekBarColors: { base: 'rgba(255, 255, 255, 0.3)', buffered: 'rgba(255, 255, 255, 0.5)', played: 'rgba(255, 0, 0)' }
-      });
-
-      const fullscreenBtn = document.querySelector('.shaka-fullscreen-button');
-
-      const pipIcon = document.createElement('button');
-      pipIcon.innerHTML = '<i class="material-icons-round" style="font-size:24px;">picture_in_picture_alt</i>';
-      pipIcon.classList.add('custom-icon-btn'); pipIcon.title = "Picture-in-Picture"; pipIcon.setAttribute('aria-label', 'Picture-in-Picture');
-      if (fullscreenBtn && fullscreenBtn.parentNode) fullscreenBtn.parentNode.insertBefore(pipIcon, fullscreenBtn);
-      pipIcon.onclick = async (e) => { e.stopPropagation(); togglePip(); };
-
-      ratioIcon = document.createElement('button');
-      ratioIcon.classList.add('custom-icon-btn'); ratioIcon.title = "Change Aspect Ratio"; ratioIcon.setAttribute('aria-label', 'Change Aspect Ratio');
-      syncRatioIcon();
-      if (fullscreenBtn && fullscreenBtn.parentNode) fullscreenBtn.parentNode.insertBefore(ratioIcon, fullscreenBtn);
-      ratioIcon.onclick = (e) => { e.preventDefault(); e.stopPropagation(); cycleRatio(); };
-
-      document.addEventListener('fullscreenchange', () => {
-        if (document.fullscreenElement) {
-          try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); } catch (e) {}
-        } else {
-          try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
+        controlPanelElements: [
+          'play_pause',
+          'mute',
+          'volume',
+          'spacer',
+          'language',
+          'quality',
+          'fullscreen'
+        ],
+        volumeBarColors: {
+          base: 'rgba(255, 255, 255, 0.3)',
+          level: '#e74c3c'
+        },
+        seekBarColors: {
+          base: 'rgba(255, 255, 255, 0.3)',
+          buffered: 'rgba(255, 255, 255, 0.5)',
+          played: 'rgba(255, 0, 0)'
         }
       });
 
-      watchControls();
-      syncControlsVisualState();
+      const fullscreenBtn = document.querySelector(
+        '.shaka-fullscreen-button'
+      );
 
-      player.addEventListener('error', onPlayerError);
+      // Picture-in-Picture button
+      const pipIcon = document.createElement('button');
 
-      player.getNetworkingEngine().registerRequestFilter((type, request) => {
-        request.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36';
-      });
+      pipIcon.innerHTML =
+        '<i class="material-icons-round" style="font-size:24px;">picture_in_picture_alt</i>';
 
-      // DRM & stream configuration
-      let drmConfig = { clearKeys: parseKeys(rawKeys) };
+      pipIcon.classList.add('custom-icon-btn');
+      pipIcon.title = 'Picture-in-Picture';
+
+      if (fullscreenBtn && fullscreenBtn.parentNode) {
+        fullscreenBtn.parentNode.insertBefore(
+          pipIcon,
+          fullscreenBtn
+        );
+      }
+
+      pipIcon.onclick = async (e) => {
+        e.stopPropagation();
+
+        try {
+          if (video !== document.pictureInPictureElement) {
+            await video.requestPictureInPicture();
+          } else {
+            await document.exitPictureInPicture();
+          }
+        } catch (err) {}
+      };
+
+      // Aspect ratio button
+      const ratioIcon = document.createElement('button');
+
+      ratioIcon.innerHTML =
+        `<i class="material-icons-round" style="font-size:24px;">${ratioModes[currentRatioIndex].icon}</i>`;
+
+      ratioIcon.classList.add('custom-icon-btn');
+      ratioIcon.title = 'Change Aspect Ratio';
+
+      if (fullscreenBtn && fullscreenBtn.parentNode) {
+        fullscreenBtn.parentNode.insertBefore(
+          ratioIcon,
+          fullscreenBtn
+        );
+      }
+
+      ratioIcon.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        currentRatioIndex =
+          (currentRatioIndex + 1) % ratioModes.length;
+
+        applyRatio();
+
+        ratioIcon.innerHTML =
+          `<i class="material-icons-round" style="font-size:24px;">${ratioModes[currentRatioIndex].icon}</i>`;
+
+        showToast(ratioModes[currentRatioIndex].name);
+      };
+
+      // DRM & Stream Configuration
+      player.getNetworkingEngine().registerRequestFilter(
+        (type, request) => {
+          request.headers['User-Agent'] =
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36';
+        }
+      );
+
+      let rawKeys =
+        "b4d7fc89103597185058cc4c81a1800d:17062472ba2a3f1db709d3bb7761c936";
+
+      let drmConfig = {
+        clearKeys: parseKeys(rawKeys)
+      };
+
+      let streamUrl =
+        "https://soft-water-8070.sphub-tech.workers.dev/npl/npl-live.mpd";
+
       player.configure({
-        preferredAudioLanguage: 'en', preferredTextLanguage: 'en', drm: drmConfig,
-        streaming: { bufferingGoal: 30, rebufferingGoal: 2, bufferBehind: 10, retryParameters: { timeout: 10000, maxAttempts: 5, baseDelay: 1000, backoffFactor: 2 } },
-        manifest: { retryParameters: { timeout: 10000, maxAttempts: 3 } },
-        abr: { enabled: true }
+        preferredAudioLanguage: 'en',
+        preferredTextLanguage: 'en',
+        drm: drmConfig,
+
+        streaming: {
+          bufferingGoal: 30,
+          rebufferingGoal: 2,
+          bufferBehind: 10,
+          retryParameters: {
+            timeout: 10000,
+            maxAttempts: 5,
+            baseDelay: 1000,
+            backoffFactor: 2
+          }
+        },
+
+        manifest: {
+          retryParameters: {
+            timeout: 10000,
+            maxAttempts: 3
+          }
+        },
+
+        abr: {
+          enabled: true
+        }
       });
 
-      showSpinner();
       try {
         await player.load(streamUrl);
         applyRatio();
-        injectLiveFallback();
       } catch (error) {
-        console.error("Error loading stream:", error);
-        showError(friendlyCategoryTitle(error && error.category), describeError(error));
+        console.error('Error loading stream:', error);
       }
+
     });
   </script>
 </body>
