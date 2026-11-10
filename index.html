@@ -7,11 +7,17 @@
   <title>Player</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
+
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     html, body {
       background: #000;
@@ -47,8 +53,13 @@
       flex-direction: column !important;
     }
 
-    .shaka-seek-bar-container { order: 1 !important; }
-    .shaka-controls-button-panel { order: 2 !important; }
+    .shaka-seek-bar-container {
+      order: 1 !important;
+    }
+
+    .shaka-controls-button-panel {
+      order: 2 !important;
+    }
 
     .custom-icon-btn {
       background: none;
@@ -121,6 +132,7 @@
 </head>
 
 <body>
+
   <div class="shaka-video-container" id="video-container">
 
     <video
@@ -133,9 +145,11 @@
     </video>
 
     <div id="toast" class="toast-message">Original</div>
+
   </div>
 
   <script>
+
     const video = document.getElementById('video');
     const toast = document.getElementById('toast');
     const container = document.getElementById('video-container');
@@ -144,19 +158,32 @@
     let currentRatioIndex = 0;
 
     const ratioModes = [
-      { mode: 'contain', name: 'Original', icon: 'aspect_ratio' },
-      { mode: 'fill', name: 'Stretch', icon: 'settings_overscan' },
-      { mode: 'cover', name: 'Zoom (Fill)', icon: 'crop_free' }
+      {
+        mode: 'contain',
+        name: 'Original',
+        icon: 'aspect_ratio'
+      },
+      {
+        mode: 'fill',
+        name: 'Stretch',
+        icon: 'settings_overscan'
+      },
+      {
+        mode: 'cover',
+        name: 'Zoom (Fill)',
+        icon: 'crop_free'
+      }
     ];
 
     function showToast(message) {
       toast.innerText = message;
       toast.classList.add('show');
+
       clearTimeout(toastTimeout);
-      toastTimeout = setTimeout(
-        () => toast.classList.remove('show'),
-        1500
-      );
+
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 1500);
     }
 
     function applyRatio() {
@@ -168,7 +195,10 @@
 
       input.split(',').forEach(pair => {
         let [kid, key] = pair.trim().split(':');
-        if (kid && key) keys[kid] = key;
+
+        if (kid && key) {
+          keys[kid] = key;
+        }
       });
 
       return keys;
@@ -178,9 +208,13 @@
 
       shaka.polyfill.installAll();
 
-      if (!shaka.Player.isBrowserSupported()) return;
+      if (!shaka.Player.isBrowserSupported()) {
+        console.error('Browser not supported by Shaka Player');
+        return;
+      }
 
       const player = new shaka.Player();
+
       await player.attach(video);
 
       const ui = new shaka.ui.Overlay(
@@ -191,6 +225,7 @@
 
       ui.configure({
         fadeDelay: 3,
+
         controlPanelElements: [
           'play_pause',
           'mute',
@@ -200,10 +235,12 @@
           'quality',
           'fullscreen'
         ],
+
         volumeBarColors: {
           base: 'rgba(255, 255, 255, 0.3)',
           level: '#e74c3c'
         },
+
         seekBarColors: {
           base: 'rgba(255, 255, 255, 0.3)',
           buffered: 'rgba(255, 255, 255, 0.5)',
@@ -216,12 +253,14 @@
       );
 
       // Picture-in-Picture button
+
       const pipIcon = document.createElement('button');
 
       pipIcon.innerHTML =
         '<i class="material-icons-round" style="font-size:24px;">picture_in_picture_alt</i>';
 
       pipIcon.classList.add('custom-icon-btn');
+
       pipIcon.title = 'Picture-in-Picture';
 
       if (fullscreenBtn && fullscreenBtn.parentNode) {
@@ -232,24 +271,31 @@
       }
 
       pipIcon.onclick = async (e) => {
+
         e.stopPropagation();
 
         try {
+
           if (video !== document.pictureInPictureElement) {
             await video.requestPictureInPicture();
           } else {
             await document.exitPictureInPicture();
           }
-        } catch (err) {}
+
+        } catch (err) {
+          console.error('Picture-in-Picture error:', err);
+        }
       };
 
       // Aspect ratio button
+
       const ratioIcon = document.createElement('button');
 
       ratioIcon.innerHTML =
         `<i class="material-icons-round" style="font-size:24px;">${ratioModes[currentRatioIndex].icon}</i>`;
 
       ratioIcon.classList.add('custom-icon-btn');
+
       ratioIcon.title = 'Change Aspect Ratio';
 
       if (fullscreenBtn && fullscreenBtn.parentNode) {
@@ -260,6 +306,7 @@
       }
 
       ratioIcon.onclick = (e) => {
+
         e.preventDefault();
         e.stopPropagation();
 
@@ -274,11 +321,37 @@
         showToast(ratioModes[currentRatioIndex].name);
       };
 
+      // Fullscreen orientation support
+
+      document.addEventListener('fullscreenchange', () => {
+
+        if (document.fullscreenElement) {
+
+          try {
+            if (screen.orientation && screen.orientation.lock) {
+              screen.orientation.lock('landscape').catch(() => {});
+            }
+          } catch (e) {}
+
+        } else {
+
+          try {
+            if (screen.orientation && screen.orientation.unlock) {
+              screen.orientation.unlock();
+            }
+          } catch (e) {}
+
+        }
+      });
+
       // DRM & Stream Configuration
+
       player.getNetworkingEngine().registerRequestFilter(
         (type, request) => {
+
           request.headers['User-Agent'] =
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36';
+
         }
       );
 
@@ -292,18 +365,30 @@
       let streamUrl =
         "https://soft-water-8070.sphub-tech.workers.dev/npl/npl-live.mpd";
 
+      // Playback and buffering configuration
+
       player.configure({
+
         preferredAudioLanguage: 'en',
+
         preferredTextLanguage: 'en',
+
         drm: drmConfig,
 
         streaming: {
-          bufferingGoal: 30,
-          rebufferingGoal: 2,
-          bufferBehind: 10,
+
+          // Up to 10 minutes of forward buffering
+          bufferingGoal: 600,
+
+          // Rebuffering threshold
+          rebufferingGoal: 10,
+
+          // Retain all previously buffered media where possible
+          bufferBehind: Infinity,
+
           retryParameters: {
-            timeout: 10000,
-            maxAttempts: 5,
+            timeout: 30000,
+            maxAttempts: 8,
             baseDelay: 1000,
             backoffFactor: 2
           }
@@ -311,24 +396,38 @@
 
         manifest: {
           retryParameters: {
-            timeout: 10000,
-            maxAttempts: 3
+            timeout: 30000,
+            maxAttempts: 5,
+            baseDelay: 1000,
+            backoffFactor: 2
           }
         },
 
         abr: {
           enabled: true
         }
+
       });
 
+      // Load stream
+
       try {
+
         await player.load(streamUrl);
+
         applyRatio();
+
+        console.log('Stream loaded successfully');
+
       } catch (error) {
+
         console.error('Error loading stream:', error);
+
       }
 
     });
+
   </script>
+
 </body>
 </html>
