@@ -48,6 +48,21 @@
       display: none !important;
     }
 
+    /* Instant control visibility */
+    .shaka-video-container:not(.shaka-controls-active) .shaka-controls-container {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      transition: none !important;
+      pointer-events: none !important;
+    }
+
+    .shaka-video-container.shaka-controls-active .shaka-controls-container {
+      opacity: 1 !important;
+      visibility: visible !important;
+      transition: none !important;
+      pointer-events: auto !important;
+    }
+
     .shaka-bottom-controls {
       display: flex !important;
       flex-direction: column !important;
@@ -224,7 +239,9 @@
       );
 
       ui.configure({
-        fadeDelay: 3,
+
+        // No configured fade delay
+        fadeDelay: 0,
 
         controlPanelElements: [
           'play_pause',
@@ -246,6 +263,7 @@
           buffered: 'rgba(255, 255, 255, 0.5)',
           played: 'rgba(255, 0, 0)'
         }
+
       });
 
       const fullscreenBtn = document.querySelector(
@@ -285,6 +303,7 @@
         } catch (err) {
           console.error('Picture-in-Picture error:', err);
         }
+
       };
 
       // Aspect ratio button
@@ -319,6 +338,7 @@
           `<i class="material-icons-round" style="font-size:24px;">${ratioModes[currentRatioIndex].icon}</i>`;
 
         showToast(ratioModes[currentRatioIndex].name);
+
       };
 
       // Fullscreen orientation support
@@ -342,9 +362,10 @@
           } catch (e) {}
 
         }
+
       });
 
-      // DRM & Stream Configuration
+      // DRM and stream configuration
 
       player.getNetworkingEngine().registerRequestFilter(
         (type, request) => {
@@ -370,20 +391,16 @@
       player.configure({
 
         preferredAudioLanguage: 'en',
-
         preferredTextLanguage: 'en',
 
         drm: drmConfig,
 
         streaming: {
 
-          // Up to 10 minutes of forward buffering
           bufferingGoal: 600,
 
-          // Rebuffering threshold
           rebufferingGoal: 10,
 
-          // Retain all previously buffered media where possible
           bufferBehind: Infinity,
 
           retryParameters: {
@@ -392,15 +409,18 @@
             baseDelay: 1000,
             backoffFactor: 2
           }
+
         },
 
         manifest: {
+
           retryParameters: {
             timeout: 30000,
             maxAttempts: 5,
             baseDelay: 1000,
             backoffFactor: 2
           }
+
         },
 
         abr: {
